@@ -5,20 +5,48 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
 [RequireComponent(typeof(ARRaycastManager))]
+[RequireComponent(typeof(ARPlaneManager))]
 public class SpawnObject : MonoBehaviour
 {
     static List<ARRaycastHit> hits = new List<ARRaycastHit>();
 
     ARRaycastManager rayManager;
-    GameObject currentObject;
+    ARPlaneManager planeManager;
     List<GameObject> spawnedObjects = new List<GameObject>();
-
-    [SerializeField]
     GameObject placablePrefab;
+    GameObject currentObject;
+
+    public void Spawn()
+    {
+        if (currentObject != null)
+        {
+            spawnedObjects.Add(currentObject);
+            currentObject = null;
+            planeManager.enabled = false;
+            SetAllPlanesState(false);
+        }
+    }
+
+    public void Cancel()
+    {
+        Destroy(currentObject);
+        currentObject = null;
+        planeManager.enabled = false;
+        SetAllPlanesState(false);
+    }
+
+    public void SetPrefab(GameObject prefab)
+    {
+        placablePrefab = prefab;
+        planeManager.enabled = true;
+        SetAllPlanesState(true);
+    }
 
     void Awake()
     {
         rayManager = GetComponent<ARRaycastManager>();
+        planeManager = GetComponent<ARPlaneManager>();
+        planeManager.enabled = false;
     }
 
     bool TryGetTouchPosition(out Vector2 position)
@@ -34,7 +62,7 @@ public class SpawnObject : MonoBehaviour
 
     void Update()
     {
-        if (TryGetTouchPosition(out Vector2 touchPos))
+        if (planeManager.enabled && TryGetTouchPosition(out Vector2 touchPos))
         {
             if (rayManager.Raycast(touchPos, hits, TrackableType.PlaneWithinPolygon))
             {
@@ -50,17 +78,10 @@ public class SpawnObject : MonoBehaviour
         }
     }
 
-    public void Spawn()
+    void SetAllPlanesState(bool active)
     {
-        if (currentObject != null)
-        {
-            spawnedObjects.Add(currentObject);
-            currentObject = null;
-        }
-    }
-
-    public void SetPrefab(GameObject prefab)
-    {
-        placablePrefab = prefab;
+        // Maybe create some fade effect?
+        foreach (var plane in planeManager.trackables)
+            plane.gameObject.SetActive(active);
     }
 }
