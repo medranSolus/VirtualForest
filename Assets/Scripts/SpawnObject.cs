@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
@@ -53,8 +54,12 @@ public class SpawnObject : MonoBehaviour
     {
         if (Input.touchCount > 0)
         {
-            position = Input.GetTouch(0).position;
-            return true;
+            var touch = Input.GetTouch(0);
+            if (!EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+            {
+                position = touch.position;
+                return true;
+            }
         }
         position = default;
         return false;
