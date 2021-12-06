@@ -15,6 +15,10 @@ public class SpawnObject : MonoBehaviour
     List<GameObject> spawnedObjects = new List<GameObject>();
     GameObject placablePrefab;
     GameObject currentObject;
+    float initialDistance;
+    Vector2 initialPosition1;
+    Vector2 initialPosition2;
+    Vector3 initialScale;
 
     public void Spawn()
     {
@@ -72,7 +76,47 @@ public class SpawnObject : MonoBehaviour
                 else
                 {
                     currentObject.transform.position = hitPose.position;
-                    currentObject.transform.rotation = hitPose.rotation;
+                    // currentObject.transform.rotation = hitPose.rotation;
+                }
+
+                if (Input.touchCount == 2)
+                {
+                    var touchZero = Input.GetTouch(0);
+                    var touchOne = Input.GetTouch(1);
+
+                    if (touchZero.phase == TouchPhase.Ended || touchZero.phase == TouchPhase.Canceled ||
+                        touchOne.phase == TouchPhase.Ended || touchOne.phase == TouchPhase.Canceled)
+                        {
+                            return;
+                        }
+                    
+                    if (touchZero.phase == TouchPhase.Began || touchOne.phase == TouchPhase.Began)
+                    {
+                        initialDistance = Vector2.Distance(touchZero.position, touchOne.position);
+
+                        initialPosition1 = touchZero.position - touchOne.position;
+                        initialPosition2 = touchOne.position - touchZero.position;
+
+                        initialScale = currentObject.transform.localScale;
+                        Debug.Log("Initial Distance: " + initialDistance + "GameObject Name: " + currentObject.name);
+                    }
+                    else
+                    {
+                        var currentDistance = Vector2.Distance(touchZero.position, touchOne.position);
+            
+                        if (Mathf.Approximately(initialDistance, 0))
+                        {
+                            return;
+                        }
+
+                        var factor = currentDistance / initialDistance;
+                        currentObject.transform.localScale = initialScale * factor;
+                        
+                        var prevDir = initialPosition2 - initialPosition1;      
+                        var currDir = touchOne.position - touchZero.position;
+                        var angle = Vector2.SignedAngle(prevDir, currDir);
+                        currentObject.transform.Rotate(Vector3.up, angle / 2);
+                    }
                 }
             }
         }
